@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Point&Sky - Aviation Eagle</title>
+    
+    <!-- Branding -->
+    <link rel="icon" href="https://media.aviationeagle.co.uk/psicon.png">
+    <link rel="apple-touch-icon" href="https://media.aviationeagle.co.uk/psicon.png">
+
+    <!-- OneSignal Push Notifications -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "848b92dc-3938-4308-ac33-85b2bd41fbc3",
+        });
+      });
+    </script>
+
+    <!-- Libreria per Codice Aztec -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bwip-js/3.4.0/bwip-js-min.js"></script>
+
+    <!-- Google Fonts per un'eleganza superiore -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base e Tema Chiaro Elegante */
+        :root {
+            --bg-color: #f4f6f9; /* Grigio chiarissimo, quasi bianco */
+            --text-main: #2c3e50; /* Blu scuro elegante per il testo */
+            --text-secondary: #596a7d;
+            --accent: #0056b3; /* Blu aviazione classico */
+            --accent-light: #e0efff;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --card-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, #ffffff, transparent),
+                              radial-gradient(circle at bottom left, #e9f2fa, transparent);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0; 
+            padding: 0; 
+            padding-bottom: 110px; /* Spazio per la tab bar */
+            overflow-x: hidden;
+        }
+        
+        /* UI Elementi Condivisi */
+        h1, h2, h3, h4 { 
+            color: #1a252f; 
+            margin-top: 0; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        h2 { font-size: 1.7rem; border-bottom: 2px solid var(--accent-light); padding-bottom: 10px; margin-bottom: 20px;}
+        h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--accent); }
+        
+        .branding-header { 
+            text-align: center; 
+            margin: 40px 0 30px 0; 
+        }
+        .branding-header img { 
+            max-width: 220px; 
+            filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.1));
+        }
+
+        .btn {
+            background: var(--accent); 
+            color: white; 
+            border: none;
+            padding: 14px 28px; 
+            border-radius: 12px; 
+            font-weight: 600;
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 86, 179, 0.3);
+            width: 100%;
+            display: inline-block;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .btn:hover { 
+            background: #004494; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 86, 179, 0.4);
+        }
+        .btn-danger { 
+            background: #e74c3c; 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+        .btn-danger:hover { 
+            background: #c0392b; 
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+        
+        .alert-box {
+            background: #fff8e1; 
+            border-left: 4px solid #ffc107;
+            padding: 18px; 
+            margin-bottom: 25px; 
+            border-radius: 8px;
+            font-size: 0.95em; 
+            line-height: 1.5;
+            color: #856404;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .security-box {
+            background: #fdf2f2; 
+            border-left: 4px solid #e74c3c;
+            padding: 18px; 
+            margin-bottom: 25px; 
+            border-radius: 8px;
+            font-size: 0.95em;
+            color: #c0392b;
+            line-height: 1.5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        /* Schermate e Container Responsive */
+        #login-screen, #app-screen { 
+            padding: 20px; 
+            width: 100%;
+            max-width: 600px; /* Larghezza massima per tablet/desktop */
+            margin: 0 auto; 
+            box-sizing: border-box;
+        }
+
+        .tab-content { 
+            display: none; 
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .tab-content.active { display: block; }
+        
+        /* Cards Profilo e Sfide (Eleganti) */
+        .card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 1); 
+            border-radius: 20px; 
+            padding: 25px; 
+            margin-bottom: 25px; 
+            box-shadow: var(--card-shadow);
+        }
+        .card p {
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .profile-data p { 
+            margin: 12px 0; 
+            border-bottom: 1px solid #eef2f5; 
+            padding-bottom: 12px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .profile-data p:last-child {
+            border-bottom: none;
+        }
+        .profile-data strong { 
+            color: var(--text-secondary); 
+            font-weight: 600;
+        }
+        .profile-value {
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: right;
+        }
+
+        .aztec-container { 
+            text-align: center; 
+            margin-top: 30px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 16px; 
+            display: inline-block; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eaeaea;
+        }
+        
+        /* Sfide Admin/User */
+        .challenge-item { 
+            display: flex; 
+            flex-direction: column; /* Impilato su mobile */
+            gap: 15px;
+            background: white; 
+            padding: 20px; 
+            border-radius: 16px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid #f0f0f0;
+        }
+        .challenge-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            color: #1a252f;
+        }
+        .challenge-points {
+            font-weight: 700;
+            color: #27ae60; /* Verde successo */
+            font-size: 1.2rem;
+        }
+
+        .admin-panel { 
+            background: #fff;
+            border: 2px dashed var(--accent); 
+            padding: 25px; 
+            border-radius: 16px; 
+            margin-bottom: 25px; 
+        }
+        .admin-panel input, .admin-panel select { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 15px; 
+            border-radius: 10px; 
+            border: 1px solid #ddd; 
+            background: #fafafa; 
+            color: var(--text-main); 
+            font-family: inherit;
+            box-sizing: border-box;
+            font-size: 16px; /* Evita zoom su iOS */
+        }
+        .admin-panel input:focus, .admin-panel select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        /* LIQUID GLASS TAB BAR (iOS 26 Style - Tema Chiaro) */
+        .glass-nav {
+            position: fixed; 
+            bottom: 25px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 92%; 
+            max-width: 500px; 
+            height: 80px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px) saturate(150%); 
+            -webkit-backdrop-filter: blur(30px) saturate(150%);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            display: flex; 
+            justify-content: space-evenly; 
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); 
+            z-index: 1000;
+        }
+        .nav-item {
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            color: var(--text-secondary); 
+            text-decoration: none; 
+            font-size: 12px; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effetto molla iOS */
+            width: 30%; 
+            height: 100%;
+            position: relative;
+        }
+        .nav-item.active { 
+            color: var(--accent); 
+            transform: translateY(-5px); 
+        }
+        .nav-item svg, .nav-item img { 
+            width: 28px; 
+            height: 28px; 
+            margin-bottom: 6px; 
+            opacity: 0.7; 
+            transition: 0.3s; 
+        }
+        .nav-item.active svg, .nav-item.active img { 
+            opacity: 1; 
+            filter: drop-shadow(0 4px 6px rgba(0, 86, 179, 0.3)); 
+            transform: scale(1.1);
+        }
+        /* Indicatore attivo (puntino) */
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 8px;
+            width: 4px;
+            height: 4px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            opacity: 0;
+            transition: 0.3s;
+            transform: scale(0);
+        }
+        .nav-item.active::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Badge Gradi Livelli */
+        .badge-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-bronze { background: #cd7f32; color: white; }
+        .badge-iron { background: #a19d94; color: white; }
+        .badge-silver { background: #c0c0c0; color: #333; }
+        .badge-gold { background: #ffd700; color: #333; }
+        .badge-emerald { background: #50c878; color: white; }
+        .badge-platinum { background: #e5e4e2; color: #333; }
+        .badge-diamond { background: #b9f2ff; color: #005f73; }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Media Queries per layout perfetti su Desktop/Tablet */
+        @media (min-width: 600px) {
+            .challenge-item {
+                flex-direction: row;
+                align-items: center;
+            }
+            .challenge-item .btn {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Logo Globale -->
+    <div class="branding-header">
+        <img src="https://media.aviationeagle.co.uk/Point_SkyLogo-removebg-preview.png" alt="Point&Sky Logo">
+    </div>
+
+    <!-- SCHERMATA DI LOGIN -->
+    <div id="login-screen">
+        <div class="card">
+            <h2 style="text-align: center; border: none;">Autenticazione Flotta</h2>
+            <div class="alert-box">
+                <strong>AVVISO OPERATIVO PRIMO ACCESSO:</strong><br><br>
+                È imperativo utilizzare la stessa email dell'account sul portale ufficiale <em>aviationeagle.co.uk</em>. <br><br>Esegui prima l'accesso sul sito, attendi di ricevere la tua Tessera via Email, e solo successivamente effettua il login in questa App.
+            </div>
+            <button class="btn" id="btn-google-login">Accedi con Google</button>
+            <p style="font-size: 0.8em; color: var(--text-secondary); text-align: center; margin-top:20px; line-height: 1.4;">*L'accesso nativo è gestito tramite i server sicuri e criptati di Google.</p>
+        </div>
+    </div>
+
+    <!-- SCHERMATA PRINCIPALE DELL'APP -->
+    <div id="app-screen" style="display: none;">
+        
+        <!-- Tab 1: Riscatta Sfide (Sinistra) -->
+        <div id="tab-sfide" class="tab-content">
+            <h2>Operazioni e Sfide</h2>
+            
+            <!-- Pannello Admin (Visibile solo a aviationeagle.info@gmail.com) -->
+            <div id="admin-panel" class="admin-panel" style="display: none;">
+                <h3>Pannello di Comando (ADMIN)</h3>
+                <input type="text" id="admin-nome-sfida" placeholder="Nome della Sfida (es. Briefing Completato)">
+                <input type="number" id="admin-punti-sfida" placeholder="Valore in Punti (es. 500)">
+                <select id="admin-target-sfida">
+                    <option value="TUTTI">Disponibile a TUTTA la flotta</option>
+                    <option value="SPECIFICO">Assegna a Utente Specifico</option>
+                </select>
+                <input type="text" id="admin-id-tessera" placeholder="Inserisci N. Tessera (ID Documento)" style="display:none;">
+                <button class="btn" id="btn-crea-sfida" style="margin-top: 10px;">Distribuisci Sfida</button>
+            </div>
+
+            <div id="lista-sfide">
+                <!-- Le sfide verranno caricate qui via JS -->
+            </div>
+            <p style="font-size: 0.85em; color: var(--text-secondary); text-align: center; margin-top: 25px;">
+                *Avviso: L'accredito completo dei punti riscattati può richiedere qualche giorno lavorativo per l'allineamento dei server principali.
+            </p>
+        </div>
+
+        <!-- Tab 2: Profilo (Centro - Default) -->
+        <div id="tab-profilo" class="tab-content active">
+            <h2>Profilo Cadetto</h2>
+            <div class="card profile-data">
+                <p><strong>Nome</strong> <span class="profile-value" id="ui-nome">-</span></p>
+                <p><strong>Cognome</strong> <span class="profile-value" id="ui-cognome">-</span></p>
+                <p><strong>Email</strong> <span class="profile-value" id="ui-email" style="font-size: 0.9em; word-break: break-all;">-</span></p>
+                <p><strong>Telefono</strong> <span class="profile-value" id="ui-telefono">-</span></p>
+                <p><strong>Grado Attuale</strong> <span class="profile-value badge-level" id="ui-grado">-</span></p>
+                <p><strong>Saldo Punti</strong> <span class="profile-value" id="ui-punti" style="color: #f39c12; font-size: 1.4em;">-</span></p>
+                <p style="flex-direction: column; align-items: flex-start;">
+                    <strong>N. Tessera (ID Documento)</strong> 
+                    <span class="profile-value" id="ui-tessera" style="margin-top: 5px; font-family: monospace; font-size: 1.1em; color: var(--accent);">
+                        -
+                    </span>
+                </p>
+                
+                <div style="text-align: center; width: 100%;">
+                    <div class="aztec-container">
+                        <canvas id="aztec-canvas"></canvas>
+                        <div style="font-size: 0.75rem; color: #888; margin-top: 8px;">Scansione Autorizzata</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-danger" id="btn-logout">Termina Sessione (Logout)</button>
+        </div>
+
+        <!-- Tab 3: Punti & Gradi (Destra) -->
+        <div id="tab-punti" class="tab-content">
+            <h2>Regolamento Flotta</h2>
+            
+            <div class="security-box">
+                <strong>PROTOCOLLO DI SICUREZZA:</strong><br> Qualora i punti fossero insufficienti, la richiesta verrà negata. In caso di "ABBONAMENTO CON PUNTI", se la soglia minima decade, verranno revocati immediatamente i badge. Se un utente (es. Gold) scende sotto la soglia a causa del pagamento dei badge con i punti, il grado verrà requisito e declassato.
+            </div>
+            
+            <div class="alert-box">
+                <strong>AVVISO OPERATIVO:</strong><br> Si informa il personale di volo che i prodotti del catalogo non sono ancora acquistabili. Tuttavia, è già possibile iniziare l'accumulo di miglia: guadagnerai punti per ogni ricerca di voli effettuata tramite i nostri sistemi. Inizia oggi a costruire il tuo profilo per farti trovare pronto al decollo.
+            </div>
+
+            <div class="card">
+                <h3>La Tua Ascesa al Comando</h3>
+                <p>Il programma Point&Sky è strutturato su livelli di merito crescenti. Ogni ricerca ti porta più in alto, sbloccando privilegi esclusivi e badge di prestigio.</p>
+                <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
+                <p style="font-size: 0.9em; color: var(--text-secondary);">
+                    <em>Mantenimento della quota:</em> Se il tuo saldo punti scende sotto la soglia minima del tuo livello attuale, verrai riposizionato al grado immediatamente precedente (es: da Gold a Silver se scendi sotto i 40.000 punti).
+                </p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #cd7f32;">
+                <h3>🟢 Livelli di Ingresso</h3>
+                <p><span class="badge-level badge-bronze">Bronze</span><br>
+                Il punto di partenza per ogni cadetto.<br>
+                <strong>Vantaggi:</strong> Accumulo punti attivo su ogni ricerca.<br>
+                <em>Promozione a Iron:</em> 1.500 punti.</p>
+                <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
+                <p><span class="badge-level badge-iron">Iron</span><br>
+                Dimostra la tua costanza nei cieli.<br>
+                <strong>Vantaggi:</strong> Accumulo punti + Sconto del 5% sui prodotti.<br>
+                <em>Promozione a Silver:</em> 10.000 punti.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #c0c0c0;">
+                <h3>🔵 Livelli Senior</h3>
+                <p><span class="badge-level badge-silver">Silver</span><br>
+                Il riconoscimento della tua professionalità.<br>
+                <strong>Vantaggi:</strong> Accumulo punti + Sconto del 5% sui prodotti.<br>
+                <strong>Servizi:</strong> Risposta prioritaria dal supporto tecnico.<br>
+                <strong>Badge Account Verificato:</strong> Disponibile su richiesta (400 Aeros/mese).<br>
+                <em>Promozione a Gold:</em> 40.000 punti.</p>
+                <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
+                <p><span class="badge-level badge-gold">Gold</span><br>
+                Entra nell'élite della flotta.<br>
+                <strong>Vantaggi:</strong> Accumulo punti + Sconto del 10% su tutto il catalogo (Prodotti e Servizi).<br>
+                <strong>Servizi:</strong> Assistenza Prioritaria + Piano Silver Mensile GRATUITO.<br>
+                <strong>Badge Account Verificato:</strong> GRATUITO.<br>
+                <em>Promozione a Emerald:</em> 100.000 punti.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #50c878;">
+                <h3>💎 Livelli Excellence</h3>
+                <p><span class="badge-level badge-emerald">Emerald</span><br>
+                Prestazioni superiori alla media.<br>
+                <strong>Vantaggi:</strong> Accumulo punti + Sconto del 12% su tutto il catalogo.<br>
+                <strong>Bonus:</strong> Sconto del 5% sulle Gift Card.<br>
+                <strong>Servizi:</strong> Assistenza Prioritaria + Piano Silver Annuale GRATUITO.<br>
+                <strong>Badge:</strong> Account Verificato (Gratis) + Richiesta Badge "Aviation Native" (800 Aeros/mese).<br>
+                <em>Promozione a Platinum:</em> 250.000 punti.</p>
+                <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
+                <p><span class="badge-level badge-platinum">Platinum</span><br>
+                Il comando è nelle tue mani.<br>
+                <strong>Vantaggi:</strong> Accumulo punti + Sconto del 15% su tutto il catalogo.<br>
+                <strong>Bonus:</strong> Sconto del 7% sulle Gift Card.<br>
+                <strong>Servizi:</strong> Assistenza Prioritaria + Piano Silver Annuale GRATUITO.<br>
+                <strong>Badge:</strong> Account Verificato (Gratis) + Badge "Aviation Native" (Gratis).<br>
+                <strong>Special Ops:</strong> Richiesta Badge "Eagle One" (1000 Aeros/mese) | Upgrade da Aviation Native a Eagle One (100 Aeros una tantum).<br>
+                <em>Promozione a Diamond:</em> 500.000 punti.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #b9f2ff;">
+                <h3>👑 Livello Apex</h3>
+                <p><span class="badge-level badge-diamond">Diamond</span><br>
+                Il massimo grado raggiungibile. Il cielo non ha più segreti.<br>
+                <strong>Vantaggi:</strong> Accumulo punti + Sconto del 15% su tutto il catalogo.<br>
+                <strong>Bonus:</strong> Sconto del 7% sulle Gift Card.<br>
+                <strong>Servizi:</strong> Assistenza Prioritaria + Piano Silver Annuale GRATUITO.<br>
+                <strong>Badge:</strong> Account Verificato (Gratis) + Badge "Aviation Native" (Gratis) + Badge "Eagle One" GRATUITO.<br>
+                <strong>Special Ops:</strong> Passaggio da Aviation Native a Eagle One Gratuito.<br>
+                <em>Mantenimento Grado:</em> Per restare nell'Olimpo dei piloti sono necessari 500.000 punti.</p>
+            </div>
+        </div>
+
+        <!-- Liquid Glass Tab Bar (Inferiore) -->
+        <nav class="glass-nav">
+            <div class="nav-item" data-target="tab-sfide">
+                <!-- Icona Checkmark / Sfide -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                <span>Sfide</span>
+            </div>
+            <div class="nav-item active" data-target="tab-profilo">
+                <!-- Icona Profilo -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>Profilo</span>
+            </div>
+            <div class="nav-item" data-target="tab-punti">
+                <!-- Icona Punti SVG Richiesta -->
+                <img src="https://media.aviationeagle.co.uk/aeros.svg" alt="Punti">
+                <span>Gradi</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Firebase e Logica di Sistema -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configurazione Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB858lvuIi93dYBUmviH87jrb8dHZxm1s",
+            authDomain: "giuseppe-rtdb.firebaseapp.com",
+            databaseURL: "https://giuseppe-rtdb-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "giuseppe-rtdb",
+            storageBucket: "giuseppe-rtdb.firebasestorage.app",
+            messagingSenderId: "409034640682",
+            appId: "1:409034640682:web:b183a9b69b4b51e5e8e253"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentUserDocId = null;
+        let currentUserData = null;
+        let isAdmin = false;
+
+        // Gestione UI Tabs con Haptic Feedback (se supportato)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if(navigator.vibrate) navigator.vibrate(10); // Piccolo feedback tattile
+                
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                
+                item.classList.add('active');
+                document.getElementById(item.getAttribute('data-target')).classList.add('active');
+                window.scrollTo(0,0); // Torna in cima al cambio tab
+            });
+        });
+
+        // Funzione per impostare la classe colore corretta al badge del grado
+        function impostaColoreGrado(gradoStringa) {
+            const el = document.getElementById('ui-grado');
+            el.className = 'profile-value badge-level'; // Reset
+            el.innerText = gradoStringa || 'Bronze';
+            
+            const g = (gradoStringa || '').toLowerCase();
+            if(g.includes('bronze')) el.classList.add('badge-bronze');
+            else if(g.includes('iron')) el.classList.add('badge-iron');
+            else if(g.includes('silver')) el.classList.add('badge-silver');
+            else if(g.includes('gold')) el.classList.add('badge-gold');
+            else if(g.includes('emerald')) el.classList.add('badge-emerald');
+            else if(g.includes('platinum')) el.classList.add('badge-platinum');
+            else if(g.includes('diamond')) el.classList.add('badge-diamond');
+            else el.classList.add('badge-bronze'); // fallback
+        }
+
+        // Gestione Login
+        document.getElementById('btn-google-login').addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => alert("Errore di Autenticazione: " + error.message));
+        });
+
+        // Gestione Logout
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            if(confirm("Sei sicuro di voler terminare la sessione?")) {
+                signOut(auth);
+            }
+        });
+
+        // Monitoraggio Stato Auth
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Ricerca Utente in Firestore
+                const q = query(collection(db, "membri_pointandsky"), where("email", "==", user.email));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    alert("ATTENZIONE: Nessuna Tessera associata a questa email. Assicurati di aver effettuato la procedura su aviationeagle.co.uk e ricevuto la tessera via email prima di accedere all'App.");
+                    signOut(auth);
+                    return;
+                }
+
+                // Caricamento Dati
+                const userDoc = querySnapshot.docs[0];
+                currentUserDocId = userDoc.id;
+                currentUserData = userDoc.data();
+                isAdmin = (user.email === 'aviationeagle.info@gmail.com');
+
+                document.getElementById('ui-nome').innerText = currentUserData.nome || 'Non specificato';
+                document.getElementById('ui-cognome').innerText = currentUserData.cognome || 'Non specificato';
+                document.getElementById('ui-email').innerText = currentUserData.email || '-';
+                document.getElementById('ui-telefono').innerText = currentUserData.telefono || 'Non specificato';
+                document.getElementById('ui-punti').innerText = new Intl.NumberFormat('it-IT').format(currentUserData.punti || 0) + ' ✈';
+                document.getElementById('ui-tessera').innerText = currentUserDocId;
+                
+                impostaColoreGrado(currentUserData.grado);
+
+                // Generazione Codice Aztec nitido
+                try {
+                    bwipjs.toCanvas('aztec-canvas', {
+                        bcid: 'azteccode',       
+                        text: currentUserDocId,  
+                        scale: 4,               
+                        height: 25,              
+                        width: 25,              
+                        includetext: false,
+                        backgroundcolor: 'ffffff'
+                    });
+                } catch (e) {
+                    console.error("Errore decodifica Aztec:", e);
+                }
+
+                // Logica Admin
+                if (isAdmin) {
+                    document.getElementById('admin-panel').style.display = 'block';
+                }
+
+                // Switch UI
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'block';
+                
+                caricaSfide();
+                
+            } else {
+                // Utente Non Loggato
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('login-screen').style.alignItems = 'center';
+                document.getElementById('login-screen').style.minHeight = '100vh';
+                document.getElementById('app-screen').style.display = 'none';
+                currentUserDocId = null;
+                currentUserData = null;
+                isAdmin = false;
+            }
+        });
+
+        // Toggle UI Input Admin
+        document.getElementById('admin-target-sfida').addEventListener('change', (e) => {
+            document.getElementById('admin-id-tessera').style.display = e.target.value === 'SPECIFICO' ? 'block' : 'none';
+        });
+
+        // Creazione Sfida (Solo Admin)
+        document.getElementById('btn-crea-sfida').addEventListener('click', async () => {
+            if (!isAdmin) return;
+            const nome = document.getElementById('admin-nome-sfida').value;
+            const punti = parseInt(document.getElementById('admin-punti-sfida').value);
+            const tipoTarget = document.getElementById('admin-target-sfida').value;
+            let target = "TUTTI";
+            if (tipoTarget === 'SPECIFICO') {
+                target = document.getElementById('admin-id-tessera').value;
+                if(!target) { alert("Inserire il numero tessera per l'utente specifico."); return; }
+            }
+
+            if(nome && !isNaN(punti)) {
+                try {
+                    await addDoc(collection(db, "sfide"), {
+                        nome: nome,
+                        punti: punti,
+                        target: target
+                    });
+                    alert("Sfida distribuita con successo.");
+                    document.getElementById('admin-nome-sfida').value = '';
+                    document.getElementById('admin-punti-sfida').value = '';
+                } catch (e) {
+                    alert("Errore nella creazione della sfida.");
+                    console.error(e);
+                }
+            } else {
+                alert("Compila tutti i campi correttamente.");
+            }
+        });
+
+        // Caricamento e Riscatto Sfide (Realtime)
+        function caricaSfide() {
+            const sfideRef = collection(db, "sfide");
+            onSnapshot(sfideRef, (snapshot) => {
+                const contenitore = document.getElementById('lista-sfide');
+                contenitore.innerHTML = '';
+                
+                let sfideTrovate = 0;
+
+                snapshot.forEach((docSnap) => {
+                    const sfida = docSnap.data();
+                    
+                    if (sfida.target === "TUTTI" || sfida.target === currentUserDocId || isAdmin) {
+                        sfideTrovate++;
+                        const div = document.createElement('div');
+                        div.className = 'challenge-item';
+                        
+                        let targetText = sfida.target === "TUTTI" ? "Globale" : "Personale";
+                        if(isAdmin) targetText = sfida.target;
+
+                        div.innerHTML = `
+                            <div class="challenge-info">
+                                <h4>${sfida.nome}</h4>
+                                <span class="challenge-points">+${sfida.punti} Punti</span> 
+                                <span style="font-size:0.8em; color:var(--text-secondary); margin-left: 10px;">(Target: ${targetText})</span>
+                            </div>
+                        `;
+                        
+                        const btn = document.createElement('button');
+                        btn.className = 'btn';
+                        btn.innerText = 'Riscatta Ora';
+                        btn.onclick = () => riscattaSfida(docSnap.id, sfida.punti);
+                        
+                        div.appendChild(btn);
+                        contenitore.appendChild(div);
+                    }
+                });
+
+                if(sfideTrovate === 0 && !isAdmin) {
+                    contenitore.innerHTML = '<div class="card" style="text-align:center;"><p style="color:var(--text-secondary);">Nessuna operazione o sfida disponibile al momento. Resta in attesa di ordini.</p></div>';
+                }
+            });
+        }
+
+        async function riscattaSfida(sfidaId, puntiSfida) {
+            if (!currentUserDocId) return;
+            try {
+                // Disabilita UI temporaneamente
+                const container = document.getElementById('lista-sfide');
+                container.style.opacity = '0.5';
+                container.style.pointerEvents = 'none';
+
+                const userRef = doc(db, "membri_pointandsky", currentUserDocId);
+                const attualiPunti = parseInt(currentUserData.punti) || 0;
+                const nuoviPunti = attualiPunti + parseInt(puntiSfida);
+                
+                await updateDoc(userRef, { punti: nuoviPunti });
+                currentUserData.punti = nuoviPunti;
+                document.getElementById('ui-punti').innerText = new Intl.NumberFormat('it-IT').format(nuoviPunti) + ' ✈';
+                
+                await deleteDoc(doc(db, "sfide", sfidaId));
+                
+                alert(`Operazione Completata con Successo! \nHai acquisito +${puntiSfida} punti.\nL'allineamento dei database è in corso.`);
+            } catch(e) {
+                console.error("Errore durante il riscatto:", e);
+                alert("Errore di connessione ai database centrali. Riprova più tardi.");
+            } finally {
+                // Riabilita UI
+                const container = document.getElementById('lista-sfide');
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+            }
+        }
+    </script>
+</body>
+</html>
