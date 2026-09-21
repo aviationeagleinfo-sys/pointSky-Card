@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tessera Digitale Membri</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        serif: ['Cinzel', 'Georgia', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- JsBarcode Library for Barcode rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <!-- QRious for QR Code generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <!-- Custom CSS & Print Styles -->
+    <style>
+        /* Card Flip & Hover Animations */
+        .card-shadow {
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(234, 179, 8, 0.15);
+        }
+        
+        .hologram-effect {
+            background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0.3) 100%);
+            pointer-events: none;
+        }
+
+        /* Card Theme Gradients */
+        .theme-obsidian {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
+            border-color: rgba(234, 179, 8, 0.3);
+        }
+        .theme-gold {
+            background: linear-gradient(135deg, #1c1917 0%, #451a03 50%, #1c1917 100%);
+            border-color: rgba(250, 204, 21, 0.5);
+        }
+        .theme-sapphire {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0284c7 100%);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+        .theme-emerald {
+            background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0f172a 100%);
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        /* Barcode SVG styling to ensure high contrast barcode rendering */
+        .barcode-container svg {
+            width: 100%;
+            height: auto;
+            max-height: 80px;
+            background-color: #ffffff;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        /* Print target layout override */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-card-only {
+                box-shadow: none !important;
+                border: 2px solid #000 !important;
+                color: black !important;
+                background: white !important;
+                page-break-inside: avoid;
+            }
+            .print-card-only * {
+                color: black !important;
+                text-shadow: none !important;
+            }
+            .barcode-container svg {
+                border: 1px solid #ccc;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-black">
+
+    <!-- Top Bar Navigation -->
+    <header class="no-print border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid me-0 fa-id-card"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight text-white tracking-wide">Portale Tessera Digitale</h1>
+                    <p class="text-xs text-slate-400">Verifica Membri Firestore</p>
+                </div>
+            </div>
+
+            <!-- Quick Lookup Input -->
+            <form id="search-form" class="flex items-center gap-2 max-w-sm w-full sm:w-auto">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input 
+                        type="text" 
+                        id="search-id-input" 
+                        placeholder="Cerca ID Membro (es. AE2312ROSSO)..." 
+                        class="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-2 outline-none transition-colors"
+                        required
+                    />
+                </div>
+                <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-3 py-2 rounded-lg text-xs transition-colors flex items-center gap-1 shrink-0">
+                    <span>Cerca</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col items-center justify-center">
+
+        <!-- Loading State Indicator -->
+        <div id="loading-state" class="flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <div class="relative w-16 h-16">
+                <div class="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-slate-700/30 border-b-yellow-300 animate-spin flex items-center justify-center"></div>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-white">Caricamento dati tessera...</h3>
+                <p id="loading-subtext" class="text-sm text-slate-400 mt-1">Connessione al database Firestore in corso</p>
+            </div>
+        </div>
+
+        <!-- No ID Specified / Selector View -->
+        <div id="no-id-state" class="hidden max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center shadow-xl my-8">
+            <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 border border-amber-500/20">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Nessun ID Membro Specificato</h2>
+            <p class="text-sm text-slate-400 mb-6">Inserisci il codice identificativo della tessera nell'URL (es. <code class="text-amber-400 bg-slate-950 px-2 py-0.5 rounded text-xs">?id=AE2312ROSSO</code>) oppure effettua una ricerca.</p>
+            
+            <div class="space-y-3">
+                <button id="btn-load-demo" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 py-2.5 px-4 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                    Visualizza Scheda Demo di Prova
+                </button>
+            </div>
+        </div>
+
+        <!-- Document Not Found / Error State -->
+        <div id="error-state" class="hidden max-w-md w-full bg-slate-900/90 border border-red-500/30 rounded-2xl p-6 text-center shadow-2xl my-8">
+            <div class="w-16 h-16 bg-red-500/10 text-red-400 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 border border-red-500/20">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 id="error-title" class="text-xl font-bold text-white mb-2">Tessera Non Trovata</h2>
+            <p id="error-message" class="text-sm text-slate-300 mb-6">Impossibile recuperare i dati per l'ID specificato. Verificare la correttezza del codice.</p>
+            
+            <div class="flex flex-col gap-2">
+                <button id="btn-retry" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold py-2.5 px-4 rounded-xl text-sm transition">
+                    Riprova Ricerca
+                </button>
+                <button id="btn-mock-fallback" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-4 rounded-xl text-xs transition">
+                    Mostra comunque struttura con dati di esempio
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Container (Card + Details) -->
+        <div id="card-content" class="hidden w-full flex flex-col items-center gap-8 py-4">
+
+            <!-- Card Controls Toolbar -->
+            <div class="no-print w-full max-w-2xl flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800 backdrop-blur-sm">
+                <!-- Theme Switcher -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-slate-400 pl-1"><i class="fa-solid fa-palette mr-1"></i>Tema:</span>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="setCardTheme('obsidian')" class="w-6 h-6 rounded-full bg-slate-900 border border-amber-500/60 hover:scale-110 transition" title="Obsidian Gold"></button>
+                        <button onclick="setCardTheme('gold')" class="w-6 h-6 rounded-full bg-amber-800 border border-amber-400 hover:scale-110 transition" title="Executive Gold"></button>
+                        <button onclick="setCardTheme('sapphire')" class="w-6 h-6 rounded-full bg-blue-700 border border-sky-400 hover:scale-110 transition" title="Sapphire VIP"></button>
+                        <button onclick="setCardTheme('emerald')" class="w-6 h-6 rounded-full bg-emerald-800 border border-emerald-400 hover:scale-110 transition" title="Emerald Club"></button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <button id="btn-share" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition border border-slate-700 flex items-center gap-1.5" title="Copia Link Diretto">
+                        <i class="fa-solid fa-share-nodes text-amber-400"></i>
+                        <span>Condividi</span>
+                    </button>
+                    <button id="btn-print" onclick="window.print()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition shadow-md shadow-amber-500/10 flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Stampa / PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- THE DIGITAL MEMBERSHIP CARD FRONT -->
+            <div id="membership-card" class="print-card-only relative w-full max-w-md aspect-[1.586/1] theme-obsidian border-2 rounded-2xl p-5 sm:p-6 card-shadow flex flex-col justify-between overflow-hidden transition-all duration-300 select-none">
+                
+                <!-- Hologram / Shimmer Overlay -->
+                <div class="hologram-effect absolute inset-0 rounded-2xl"></div>
+
+                <!-- Card Header -->
+                <div class="relative z-10 flex items-start justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-amber-400 font-serif font-bold text-xs sm:text-sm tracking-widest uppercase">Tessera Associativa</span>
+                        </div>
+                        <h2 id="card-organization" class="text-white/80 font-semibold text-xs tracking-wide uppercase mt-0.5">Club Membri Ufficiali</h2>
+                    </div>
+
+                    <!-- Status Badge -->
+                    <div id="status-badge" class="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="status-text">Attivo</span>
+                    </div>
+                </div>
+
+                <!-- Prominent Member Name Display -->
+                <div class="relative z-10 my-auto py-2">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-medium mb-0.5">Titolare della tessera</p>
+                    <h3 id="card-full-name" class="text-2xl sm:text-3xl font-bold text-white tracking-wide font-sans leading-tight drop-shadow-md">
+                        -- --
+                    </h3>
+                    <p id="card-role" class="text-xs text-amber-400/90 font-medium mt-1 uppercase tracking-wider">
+                        Socio Sostenitore
+                    </p>
+                </div>
+
+                <!-- Card Footer & Barcode Section -->
+                <div class="relative z-10 pt-2 border-t border-white/10 flex flex-col gap-2">
+                    
+                    <div class="flex items-end justify-between gap-2">
+                        <!-- Barcode Image Container -->
+                        <div class="barcode-container flex-1 max-w-[240px]">
+                            <svg id="barcode"></svg>
+                        </div>
+
+                        <!-- Mini QR Code toggle fallback -->
+                        <div class="hidden sm:block shrink-0 bg-white p-1 rounded-lg">
+                            <canvas id="qrcode" class="w-12 h-12"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-0.5">
+                        <span>ID DOC: <strong id="card-doc-id" class="text-slate-200">--</strong></span>
+                        <span>SCADENZA: <strong id="card-expiration" class="text-slate-200">--/--/----</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FULL MEMBER DETAILS GRID -->
+            <div class="no-print w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-6">
+                
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Dettagli Completi Documento</h3>
+                            <p class="text-xs text-slate-400">Estratti direttamente dalla collezione <code class="text-amber-400">membri</code></p>
+                        </div>
+                    </div>
+
+                    <button id="btn-copy-id" class="text-xs text-slate-400 hover:text-amber-400 bg-slate-950 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copia ID</span>
+                    </button>
+                </div>
+
+                <!-- Primary Highlighted Attributes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Nome</span>
+                        <p id="field-nome" class="text-slate-100 font-bold text-lg">--</p>
+                    </div>
+                    <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Cognome</span>
+                        <p id="field-cognome" class="text-slate-100 font-bold text-lg">--</p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Data Table for ALL Fields -->
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-ul text-amber-500"></i>
+                        Tutti i campi registrati
+                    </h4>
+                    
+                    <div class="bg-slate-950 rounded-xl border border-slate-800/80 overflow-hidden">
+                        <div id="dynamic-fields-list" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+                            <!-- Dynamic key-value pairs populated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Info Note -->
+                <div class="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl text-xs text-slate-400 flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-info text-amber-400 mt-0.5 shrink-0"></i>
+                    <span>Tutti i dati visualizzati provengono in tempo reale dal documento Firestore identificato con ID unico. In caso di incongruenze contattare l'amministrazione.</span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Notification Toast Modal -->
+    <div id="toast" class="no-print fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-amber-500/40 text-slate-100 text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-amber-400 text-base"></i>
+        <span id="toast-message">Messaggio di notifica</span>
+    </div>
+
+    <!-- FIREBASE AND CLIENT SCRIPT MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration provided by user
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB858lvuIi93dYBUmviH87jrb8dHZxm1s",
+            authDomain: "giuseppe-rtdb.firebaseapp.com",
+            databaseURL: "https://giuseppe-rtdb-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "giuseppe-rtdb",
+            storageBucket: "giuseppe-rtdb.firebasestorage.app",
+            messagingSenderId: "409034640682",
+            appId: "1:409034640682:web:b183a9b69b4b51e5e8e253"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // State variables
+        let currentDocumentId = null;
+        let currentDocumentData = null;
+
+        // UI Element References
+        const loadingState = document.getElementById('loading-state');
+        const noIdState = document.getElementById('no-id-state');
+        const errorState = document.getElementById('error-state');
+        const cardContent = document.getElementById('card-content');
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-id-input');
+
+        /**
+         * Main function to fetch document from 'membri' collection
+         */
+        async function fetchMemberCard(docId) {
+            currentDocumentId = docId;
+            showState('loading');
+            document.getElementById('loading-subtext').textContent = `Lettura documento "membri/${docId}"...`;
+
+            try {
+                // Ensure anonymous auth sign in (prevents permission errors if Firestore rules require auth)
+                try {
+                    await signInAnonymously(auth);
+                } catch (authErr) {
+                    console.warn("Avviso autenticazione anonima:", authErr);
+                }
+
+                // Reference to document under 'membri' collection
+                const docRef = doc(db, "membri", docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    currentDocumentData = docSnap.data();
+                    renderMemberCard(docId, currentDocumentData);
+                    showState('content');
+                } else {
+                    console.warn(`Nessun documento trovato con ID: ${docId}`);
+                    showError(
+                        "Documento non trovato", 
+                        `Nessun membro trovato nel database Firestore con ID "${docId}". Verifica l'ID e riprova.`
+                    );
+                }
+            } catch (err) {
+                console.error("Errore durante il recupero da Firestore:", err);
+                showError(
+                    "Errore di Connessione", 
+                    `Si è verificato un errore durante la lettura del documento: ${err.message || err}`
+                );
+            }
+        }
+
+        /**
+         * Demo / Fallback Data Generator for instant previews or tests
+         */
+        function loadDemoMember(demoId = "AE2312ROSSO") {
+            currentDocumentId = demoId;
+            currentDocumentData = {
+                Nome: "Giuseppe",
+                Cognome: "Rossi",
+                numero_tessera: demoId,
+                codice_fiscale: "RSSGPP85M01H501Z",
+                email: "giuseppe.rossi@example.it",
+                telefono: "+39 333 1234567",
+                stato: "Attivo",
+                categoria: "Socio D'Onore",
+                data_iscrizione: "15/01/2023",
+                scadenza: "31/12/2026",
+                citta: "Roma",
+                note: "Membro accreditato per eventi nazionali"
+            };
+            
+            renderMemberCard(demoId, currentDocumentData);
+            showState('content');
+            showToast("Visualizzazione dati di prova generati per " + demoId);
+        }
+
+        /**
+         * Render card UI with all extracted document data
+         */
+        function renderMemberCard(docId, data) {
+            // Extract Nome and Cognome with flexible key naming check
+            const nome = getFieldValue(data, ['Nome', 'nome', 'FIRST_NAME', 'FirstName', 'First_Name']) || 'N/A';
+            const cognome = getFieldValue(data, ['Cognome', 'cognome', 'LAST_NAME', 'LastName', 'Last_Name']) || 'N/A';
+            const fullName = `${nome} ${cognome}`.trim();
+
+            // Extract status
+            const status = getFieldValue(data, ['stato', 'Stato', 'status', 'Status', 'attivo']) || 'Attivo';
+            const category = getFieldValue(data, ['categoria', 'Categoria', 'livello', 'Livello', 'tipo', 'ruolo']) || 'Socio Membro';
+            const expiration = getFieldValue(data, ['scadenza', 'Scadenza', 'data_scadenza', 'expiration']) || 'In regola';
+
+            // Determine barcode identifier (from numero_tessera, codice, or docId itself)
+            const barcodeCode = getFieldValue(data, ['numero_tessera', 'numeroTessera', 'codice', 'tessera', 'barcode']) || docId;
+
+            // 1. Highlighted Names
+            document.getElementById('card-full-name').textContent = fullName;
+            document.getElementById('field-nome').textContent = nome;
+            document.getElementById('field-cognome').textContent = cognome;
+
+            // 2. Card Details
+            document.getElementById('card-doc-id').textContent = docId;
+            document.getElementById('card-role').textContent = category;
+            document.getElementById('card-expiration').textContent = formatVal(expiration);
+
+            // 3. Status Badge Update
+            const statusBadge = document.getElementById('status-badge');
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = String(status);
+
+            const isInactive = String(status).toLowerCase().includes('inattiv') || String(status).toLowerCase().includes('scadut') || status === false;
+            if (isInactive) {
+                statusBadge.className = "flex items-center gap-1.5 bg-red-500/20 border border-red-500/50 text-red-300 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider";
+            } else {
+                statusBadge.className = "flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider";
+            }
+
+            // 4. Barcode Generation via JsBarcode
+            try {
+                JsBarcode("#barcode", String(barcodeCode), {
+                    format: "CODE128",
+                    lineColor: "#000000",
+                    width: 2,
+                    height: 50,
+                    displayValue: true,
+                    fontSize: 12,
+                    fontOptions: "bold",
+                    font: "JetBrains Mono",
+                    margin: 4
+                });
+            } catch (bErr) {
+                console.warn("Impossibile generare Code128 standard, ricorso ad estensione generic:", bErr);
+                try {
+                    JsBarcode("#barcode", String(barcodeCode));
+                } catch(e) {
+                    document.getElementById('barcode').parentNode.innerHTML = `<div class="p-2 text-center text-slate-900 font-mono font-bold bg-white rounded">${barcodeCode}</div>`;
+                }
+            }
+
+            // 5. Mini QR Code Generation
+            try {
+                if (window.QRious) {
+                    new QRious({
+                        element: document.getElementById('qrcode'),
+                        value: window.location.origin + window.location.pathname + '?id=' + encodeURIComponent(docId),
+                        size: 100
+                    });
+                }
+            } catch(qErr) {
+                console.warn("QR Generator note:", qErr);
+            }
+
+            // 6. Dynamic All Fields List Rendering
+            renderAllFieldsList(data, docId);
+        }
+
+        /**
+         * Render dynamic list for ALL fields present in Firestore document
+         */
+        function renderAllFieldsList(data, docId) {
+            const container = document.getElementById('dynamic-fields-list');
+            container.innerHTML = '';
+
+            // Add Document ID entry first
+            const idRow = createFieldRow('Document ID (Firestore)', docId, 'fa-key');
+            container.appendChild(idRow);
+
+            // Iterate all key-values in document
+            const keys = Object.keys(data).sort();
+            
+            if (keys.length === 0) {
+                container.innerHTML += `<div class="p-4 text-slate-500 text-center italic">Nessun altro campo presente nel documento</div>`;
+                return;
+            }
+
+            keys.forEach(key => {
+                const val = data[key];
+                const row = createFieldRow(key, val);
+                container.appendChild(row);
+            });
+        }
+
+        /**
+         * Helper to format a table row for any field key/value
+         */
+        function createFieldRow(key, val, customIcon) {
+            const div = document.createElement('div');
+            div.className = "flex flex-col sm:flex-row sm:items-center justify-between p-3.5 hover:bg-slate-900/50 transition gap-1 sm:gap-4";
+            
+            const formattedVal = formatVal(val);
+
+            div.innerHTML = `
+                <div class="flex items-center gap-2 text-slate-400 font-mono text-xs shrink-0">
+                    <i class="fa-solid ${customIcon || 'fa-tag'} text-slate-600 text-[10px]"></i>
+                    <span class="font-semibold">${escapeHtml(key)}:</span>
+                </div>
+                <div class="text-slate-200 font-medium break-all sm:text-right text-xs sm:text-sm">
+                    ${formattedVal}
+                </div>
+            `;
+            return div;
+        }
+
+        /**
+         * Format raw field values (timestamps, objects, booleans, dates)
+         */
+        function formatVal(val) {
+            if (val === null || val === undefined) return '<span class="text-slate-600 italic">null</span>';
+            
+            // Boolean formatting
+            if (typeof val === 'boolean') {
+                return val 
+                    ? '<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i>Vero</span>' 
+                    : '<span class="text-red-400 font-semibold"><i class="fa-solid fa-xmark mr-1"></i>Falso</span>';
+            }
+
+            // Firestore Timestamp object handler
+            if (typeof val === 'object' && val !== null) {
+                if (typeof val.toDate === 'function') {
+                    return val.toDate().toLocaleString('it-IT');
+                }
+                if ('seconds' in val) {
+                    return new Date(val.seconds * 1000).toLocaleString('it-IT');
+                }
+                return `<code class="bg-slate-900 px-2 py-0.5 rounded text-amber-300 text-xs">${escapeHtml(JSON.stringify(val))}</code>`;
+            }
+
+            return escapeHtml(String(val));
+        }
+
+        /**
+         * Flexibly search for field by multiple possible case/key names
+         */
+        function getFieldValue(obj, possibleKeys) {
+            if (!obj) return null;
+            for (const key of possibleKeys) {
+                if (key in obj && obj[key] !== null && obj[key] !== undefined) {
+                    return obj[key];
+                }
+            }
+            // Fallback: check case-insensitive match
+            const lowerKeys = possibleKeys.map(k => k.toLowerCase());
+            for (const actualKey of Object.keys(obj)) {
+                if (lowerKeys.includes(actualKey.toLowerCase())) {
+                    return obj[actualKey];
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Sanitize string for direct HTML injection
+         */
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        /**
+         * Toggle view states (loading, no-id, error, content)
+         */
+        function showState(stateName) {
+            loadingState.classList.add('hidden');
+            noIdState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            cardContent.classList.add('hidden');
+
+            if (stateName === 'loading') loadingState.classList.remove('hidden');
+            if (stateName === 'no-id') noIdState.classList.remove('hidden');
+            if (stateName === 'error') errorState.classList.remove('hidden');
+            if (stateName === 'content') cardContent.classList.remove('hidden');
+        }
+
+        function showError(title, msg) {
+            document.getElementById('error-title').textContent = title;
+            document.getElementById('error-message').textContent = msg;
+            showState('error');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        /**
+         * Theme switching handler for digital card element
+         */
+        window.setCardTheme = function(themeName) {
+            const card = document.getElementById('membership-card');
+            card.classList.remove('theme-obsidian', 'theme-gold', 'theme-sapphire', 'theme-emerald');
+            card.classList.add(`theme-${themeName}`);
+            showToast(`Tema carta aggiornato: ${themeName.toUpperCase()}`);
+        };
+
+        // On DOM Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            // Parse URL Search Parameters (e.g., ?id=AE2312ROSSO or ?card=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const docId = urlParams.get('id') || urlParams.get('card') || urlParams.get('membro');
+
+            if (docId && docId.trim() !== '') {
+                searchInput.value = docId;
+                fetchMemberCard(docId.trim());
+            } else {
+                showState('no-id');
+            }
+
+            // Search Form Submission
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newId = searchInput.value.trim();
+                if (newId) {
+                    // Update URL without full page refresh
+                    const newUrl = `${window.location.pathname}?id=${encodeURIComponent(newId)}`;
+                    window.history.pushState({ path: newUrl }, '', newUrl);
+                    fetchMemberCard(newId);
+                }
+            });
+
+            // Action Buttons
+            document.getElementById('btn-load-demo').addEventListener('click', () => {
+                loadDemoMember("AE2312ROSSO");
+            });
+
+            document.getElementById('btn-retry').addEventListener('click', () => {
+                if (currentDocumentId) {
+                    fetchMemberCard(currentDocumentId);
+                } else {
+                    showState('no-id');
+                }
+            });
+
+            document.getElementById('btn-mock-fallback').addEventListener('click', () => {
+                loadDemoMember(currentDocumentId || "AE2312ROSSO");
+            });
+
+            document.getElementById('btn-copy-id').addEventListener('click', () => {
+                if (currentDocumentId) {
+                    navigator.clipboard.writeText(currentDocumentId).then(() => {
+                        showToast("ID Copiato negli appunti!");
+                    }).catch(() => {
+                        const tempInput = document.createElement("input");
+                        tempInput.value = currentDocumentId;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(tempInput);
+                        showToast("ID Copiato negli appunti!");
+                    });
+                }
+            });
+
+            document.getElementById('btn-share').addEventListener('click', () => {
+                const currentUrl = window.location.href;
+                navigator.clipboard.writeText(currentUrl).then(() => {
+                    showToast("Link diretto copiato negli appunti!");
+                }).catch(() => {
+                    document.execCommand('copy');
+                    showToast("Link copiato negli appunti!");
+                });
+            });
+        });
+    </script>
+</body>
+</html>
