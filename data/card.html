@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://media.aviationeagle.co.uk/psicon.png">
+    <link rel="apple-touch-icon" href="https://pointsky.aviationeagle.net/Point&Sky-Icon-RBG.png">
   <title>Scheda Cliente - Tessera Fedeltà</title>
   <style>
     body {
@@ -94,7 +96,7 @@
 
     try {
       // "clienti" è il nome della collezione. Cambialo se nella tua struttura ha un altro nome.
-      const docRef = doc(db, "clienti", clientId);
+      const docRef = doc(db, "membri_pointandsky", clientId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
