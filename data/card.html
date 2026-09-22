@@ -1,193 +1,130 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tessera Membro</title>
-    <!-- JsBarcode per generare il codice a barre in modo fluido -->
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            padding: 30px;
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-        }
-        .name-highlight {
-            font-size: 1.8em;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
-        .barcode-container {
-            margin: 25px 0;
-            padding: 15px 0;
-            background: #fff;
-        }
-        .barcode-container svg {
-            max-width: 100%;
-            height: auto;
-        }
-        .all-data {
-            text-align: left;
-            margin-top: 25px;
-            border-top: 2px solid #f0f2f5;
-            padding-top: 20px;
-        }
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f9f9f9;
-        }
-        .data-label {
-            font-weight: 600;
-            color: #666;
-            text-transform: capitalize;
-        }
-        .data-value {
-            color: #333;
-            font-weight: 500;
-            text-align: right;
-            word-break: break-word;
-            max-width: 60%;
-        }
-        .status-message {
-            color: #555;
-            font-style: italic;
-            font-size: 1.1em;
-        }
-        .error { color: #d93025; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheda Cliente - Tessera Fedeltà</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 450px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 8px;
+    }
+    .status {
+      font-size: 14px;
+      color: #666;
+    }
+    .error {
+      color: #d9534f;
+      font-weight: bold;
+    }
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .data-row:last-child {
+      border-bottom: none;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      color: #222;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="card">
-        <div id="status" class="status-message">Lettura dati in corso...</div>
+<div class="card">
+  <h2>Tessera Fedeltà</h2>
+  <div id="output" class="status">Caricamento dati in corso...</div>
+</div>
+
+<!-- Firebase SDK via CDN (Module) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Configurazione Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDB858lvuIi93dYBUmviH87jrb8dHZxm1s",
+    authDomain: "giuseppe-rtdb.firebaseapp.com",
+    databaseURL: "https://giuseppe-rtdb-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "giuseppe-rtdb",
+    storageBucket: "giuseppe-rtdb.firebasestorage.app",
+    messagingSenderId: "409034640682",
+    appId: "1:409034640682:web:b183a9b69b4b51e5e8e253"
+  };
+
+  // Inizializza Firebase e Firestore
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const outputDiv = document.getElementById("output");
+
+  // Estrai parametro ?id= dall'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const clientId = urlParams.get("id");
+
+  async function fetchCustomerData() {
+    if (!clientId) {
+      outputDiv.innerHTML = "<p class='error'>Nessun ID tessera specificato nell'URL. Usa ?id=NUMERO</p>";
+      return;
+    }
+
+    try {
+      // "clienti" è il nome della collezione. Cambialo se nella tua struttura ha un altro nome.
+      const docRef = doc(db, "clienti", clientId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
         
-        <div id="card-content" style="display: none;">
-            <!-- Intestazione con Nome e Cognome in evidenza -->
-            <div id="memberName" class="name-highlight"></div>
-            
-            <!-- Codice a barre -->
-            <div class="barcode-container">
-                <svg id="barcode"></svg>
+        let htmlContent = `<div class="data-row"><span class="label">ID Tessera:</span> <span class="value">${docSnap.id}</span></div>`;
+        
+        // Dinamicamente formatta tutti i campi presenti nel documento Firestore
+        for (const [key, value] of Object.entries(data)) {
+          htmlContent += `
+            <div class="data-row">
+              <span class="label">${key}:</span>
+              <span class="value">${value}</span>
             </div>
-
-            <!-- Tutti gli altri dati della tessera -->
-            <div id="otherData" class="all-data"></div>
-        </div>
-    </div>
-
-    <!-- Firebase SDK (Modular Version V9+) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-
-        // Configurazione Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDB858lvuIi93dYBUmviH87jrb8dHZxm1s",
-            authDomain: "giuseppe-rtdb.firebaseapp.com",
-            databaseURL: "https://giuseppe-rtdb-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "giuseppe-rtdb",
-            storageBucket: "giuseppe-rtdb.firebasestorage.app",
-            messagingSenderId: "409034640682",
-            appId: "1:409034640682:web:b183a9b69b4b51e5e8e253"
-        };
-
-        // Inizializza Firebase e Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Estrai il parametro "id" dall'URL (?id=...)
-        const urlParams = new URLSearchParams(window.location.search);
-        const docId = urlParams.get('id');
-
-        const statusEl = document.getElementById('status');
-        const contentEl = document.getElementById('card-content');
-        const nameEl = document.getElementById('memberName');
-        const otherDataEl = document.getElementById('otherData');
-
-        if (!docId) {
-            statusEl.innerHTML = '<span class="error">Errore: Nessun ID tessera fornito. Assicurati che l\'URL finisca con ?id=TUO_ID</span>';
-        } else {
-            fetchMemberData(docId);
+          `;
         }
 
-        async function fetchMemberData(id) {
-            try {
-                // Punta al documento specifico dentro la collezione "membri"
-                const docRef = doc(db, "membri", id);
-                const docSnap = await getDoc(docRef);
+        outputDiv.classList.remove("status");
+        outputDiv.innerHTML = htmlContent;
+      } else {
+        outputDiv.innerHTML = `<p class='error'>Nessun cliente trovato con la tessera ID: <strong>${clientId}</strong></p>`;
+      }
+    } catch (error) {
+      console.error("Errore durante il recupero dei dati:", error);
+      outputDiv.innerHTML = "<p class='error'>Errore nel caricamento dei dati dal database.</p>";
+    }
+  }
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    // 1. Estrai Nome e Cognome (gestisce anche differenze di maiuscole/minuscole nel database)
-                    const nome = data.Nome || data.nome || "";
-                    const cognome = data.Cognome || data.cognome || "";
-                    const nomeCompleto = `${nome} ${cognome}`.trim();
-                    
-                    nameEl.textContent = nomeCompleto || "NOME NON INSERITO";
+  fetchCustomerData();
+</script>
 
-                    // 2. Genera il Barcode
-                    // Usa il numero tessera se esiste nel database, altrimenti usa l'ID del documento stesso
-                    const barcodeValue = data.numero_tessera || data.NumeroTessera || id; 
-                    
-                    JsBarcode("#barcode", barcodeValue, {
-                        format: "CODE128",
-                        lineColor: "#000",
-                        width: 2.5,
-                        height: 60,
-                        displayValue: true,
-                        fontSize: 18
-                    });
-
-                    // 3. Mostra TUTTI gli altri dati
-                    for (const [key, value] of Object.entries(data)) {
-                        // Evita di stampare nuovamente Nome e Cognome nella lista
-                        if (key.toLowerCase() !== 'nome' && key.toLowerCase() !== 'cognome') {
-                            const row = document.createElement('div');
-                            row.className = 'data-row';
-                            
-                            // Formatta la chiave per togliere eventuali underscore
-                            const formattedKey = key.replace(/_/g, ' ');
-
-                            row.innerHTML = `
-                                <span class="data-label">${formattedKey}:</span>
-                                <span class="data-value">${value}</span>
-                            `;
-                            otherDataEl.appendChild(row);
-                        }
-                    }
-
-                    // Nascondi messaggio di caricamento e mostra il contenuto
-                    statusEl.style.display = 'none';
-                    contentEl.style.display = 'block';
-
-                } else {
-                    statusEl.innerHTML = '<span class="error">Tessera inesistente: Nessun membro trovato con questo ID.</span>';
-                }
-            } catch (error) {
-                console.error("Errore Firebase:", error);
-                statusEl.innerHTML = '<span class="error">Errore di connessione o permessi insufficienti su Firestore. Controlla le Security Rules.</span>';
-            }
-        }
-    </script>
 </body>
 </html>
