@@ -369,6 +369,10 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Pulsante Richiesta Pass Wallet (Visibile SOLO nell'App nativa iOS e da utente loggato) -->
+            <button id="btn-apple-wallet" class="btn" style="display: none; background: #000; color: #fff; margin-bottom: 15px; border-radius: 12px; font-weight: 600;"> Richiedi il tuo pass Wallet</button>
+            
             <button class="btn btn-danger" id="btn-logout">Termina Sessione (Logout)</button>
         </div>
 
@@ -457,6 +461,38 @@
         let currentUserDocId = null;
         let currentUserData = null;
         let isAdmin = false;
+
+        // Gestione click tasto Richiesta Pass Wallet via mailto precompilata (attivo solo se loggato e su app nativa)
+        document.getElementById("btn-apple-wallet").addEventListener("click", () => {
+            if (!currentUserData || !currentUserDocId) {
+                alert("Errore: Impossibile recuperare i dati utente. Assicurati di aver effettuato l'accesso.");
+                return;
+            }
+
+            const nome = currentUserData.nome || 'Non specificato';
+            const cognome = currentUserData.cognome || 'Non specificato';
+            const email = currentUserData.email || '-';
+            const telefono = currentUserData.telefono || 'Non specificato';
+            const tesseraId = currentUserDocId;
+            const punti = currentUserData.punti || 0;
+            const grado = currentUserData.grado || 'Bronze';
+
+            const subject = encodeURIComponent(`Richiesta Pass Apple Wallet - Point&Sky [Tessera: ${tesseraId}]`);
+            const body = encodeURIComponent(
+                `Salve, vorrei richiedere il mio pass digitale per Apple Wallet di Point&Sky.\n\n` +
+                `--- DATI CADETTO ---\n` +
+                `Nome: ${nome}\n` +
+                `Cognome: ${cognome}\n` +
+                `Email: ${email}\n` +
+                `Telefono: ${telefono}\n` +
+                `N. Tessera (ID Documento): ${tesseraId}\n` +
+                `Grado Attuale: ${grado}\n` +
+                `Saldo Punti: ${punti} ✈\n` +
+                `--------------------`
+            );
+
+            window.location.href = `mailto:point-sky@aviationeagle.net?subject=${subject}&body=${body}`;
+        });
 
         // UI EMAIL BOX TOGGLE
         const btnToggleEmailAuth = document.getElementById('btn-toggle-email-auth');
@@ -611,6 +647,12 @@
                     });
                 } catch (e) { console.error(e); }
 
+                // Mostra il tasto Apple Wallet SOLO se siamo nell'App nativa iOS e l'utente è loggato
+                if (navigator.userAgent.includes("AviationEagleApp")) {
+                    const btnWallet = document.getElementById("btn-apple-wallet");
+                    if (btnWallet) btnWallet.style.display = "block";
+                }
+
                 // LOGICA VISIVA ADMIN BLINDATA
                 if (isAdmin) {
                     document.getElementById('admin-panel').style.display = 'block';
@@ -627,6 +669,7 @@
                 document.getElementById('login-screen').style.minHeight = '100vh';
                 document.getElementById('app-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'none'; // Reset preventivo
+                document.getElementById('btn-apple-wallet').style.display = 'none'; // Nascondi se sloggato
                 currentUserDocId = null;
                 currentUserData = null;
                 isAdmin = false;
